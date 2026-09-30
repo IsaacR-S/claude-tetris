@@ -39,6 +39,7 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const themeToggleBtn = document.getElementById('theme-toggle');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -156,6 +157,11 @@ function updateHUD() {
   levelEl.textContent = level;
 }
 
+function getThemeVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
   const color = COLORS[colorIndex];
@@ -163,13 +169,13 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
   // highlight
-  context.fillStyle = 'rgba(255,255,255,0.12)';
+  context.fillStyle = getThemeVar('--block-highlight', 'rgba(255,255,255,0.12)');
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   context.globalAlpha = 1;
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = getThemeVar('--grid-line', '#22222e');
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -301,5 +307,28 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+function themeIcon(theme) {
+  return theme === 'light' ? '🌙' : '☀️';
+}
+
+function setTheme(theme) {
+  document.documentElement.classList.toggle('light-theme', theme === 'light');
+  localStorage.setItem('theme', theme);
+  themeToggleBtn.textContent = themeIcon(theme);
+  if (board) {
+    draw();
+    drawNext();
+  }
+}
+
+themeToggleBtn.textContent = themeIcon(
+  document.documentElement.classList.contains('light-theme') ? 'light' : 'dark'
+);
+
+themeToggleBtn.addEventListener('click', () => {
+  const isLight = document.documentElement.classList.contains('light-theme');
+  setTheme(isLight ? 'dark' : 'light');
+});
 
 init();
