@@ -52,10 +52,24 @@
       </aside>
     </div>
 
+    <div id="start-overlay" class="overlay">
+      <div class="overlay-box">
+        <p id="start-title">TETRIS</p>
+        <div id="start-records" class="records"></div>
+        <button id="start-btn" class="primary-btn" type="button">Jugar</button>
+      </div>
+    </div>
+
     <div id="overlay" class="overlay hidden">
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+        <p id="overlay-record-msg" class="record-msg hidden"></p>
+        <form id="name-form" class="name-form hidden" autocomplete="off">
+          <input id="name-input" type="text" maxlength="12" placeholder="Tu nombre" aria-label="Tu nombre" />
+          <button id="save-score-btn" class="primary-btn" type="submit">Guardar</button>
+        </form>
+        <div id="overlay-records" class="records"></div>
         <button id="restart-btn">Reiniciar</button>
       </div>
     </div>

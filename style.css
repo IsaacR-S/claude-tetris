@@ -16,6 +16,10 @@
   --overlay-bg: rgba(10, 10, 20, 0.75);
   --overlay-title: #e57373;
   --restart-hover: #9bbdff;
+  --record-highlight: rgba(122, 162, 247, 0.28);
+  --record-border: #2a2a3a;
+  --input-bg: #1a1a25;
+  --danger: #e57373;
 }
 
 html.light-theme {
@@ -36,6 +40,10 @@ html.light-theme {
   --overlay-bg: rgba(255, 255, 255, 0.85);
   --overlay-title: #c62828;
   --restart-hover: #5c7cfa;
+  --record-highlight: rgba(59, 91, 219, 0.2);
+  --record-border: #c8c8d8;
+  --input-bg: #ffffff;
+  --danger: #c62828;
 }
 
 *, *::before, *::after {
@@ -201,7 +209,8 @@ kbd {
   color: var(--accent);
 }
 
-#restart-btn {
+#restart-btn,
+.primary-btn {
   margin-top: 8px;
   background: var(--accent);
   color: var(--accent-text);
@@ -215,6 +224,116 @@ kbd {
   transition: background 0.15s;
 }
 
-#restart-btn:hover {
+#restart-btn:hover,
+.primary-btn:hover {
   background: var(--restart-hover);
+}
+
+/* ---- Records ---- */
+#start-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.records {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.records h2 {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--label-color);
+}
+
+.records table {
+  border-collapse: collapse;
+  min-width: 340px;
+}
+
+.records th,
+.records td {
+  padding: 3px 6px;
+  text-align: right;
+  border-bottom: 1px solid var(--record-border);
+}
+
+.records th {
+  color: var(--label-color);
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.records th:nth-child(2),
+.records td:nth-child(2) {
+  text-align: left;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.records td {
+  font-family: 'Courier New', Courier, monospace;
+  color: var(--text);
+}
+
+.records tr.highlight td {
+  background: var(--record-highlight);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.records .empty {
+  color: var(--controls-text);
+}
+
+.records .bests {
+  color: var(--controls-text);
+}
+
+.reset-records-btn {
+  background: none;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.record-msg {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.name-form {
+  display: flex;
+  gap: 8px;
+}
+
+.name-form input {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--board-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  width: 160px;
+  user-select: text;
+}
+
+.name-form input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
