@@ -44,6 +44,7 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -166,31 +167,117 @@ function getThemeVar(name, fallback) {
   return value || fallback;
 }
 
+function roundedRectPath(context, x, y, w, h, r) {
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+// Cada skin: paleta (índices 1-8), color de grid opcional y función de dibujo de bloque.
+const SKINS = {
+  retro: {
+    colors: COLORS,
+    gridColor: null,
+    draw(context, x, y, color, size) {
+      context.fillStyle = color;
+      context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+      context.fillStyle = getThemeVar('--block-highlight', 'rgba(255,255,255,0.12)');
+      context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+    },
+  },
+  neon: {
+    colors: [null, '#00f0ff', '#ffee00', '#d500f9', '#39ff14', '#ff1744', '#2979ff', '#ff9100', '#e0e0e0'],
+    gridColor: '#1a1a24',
+    draw(context, x, y, color, size) {
+      const px = x * size + 2, py = y * size + 2, w = size - 4;
+      context.shadowColor = color;
+      context.shadowBlur = 12;
+      context.strokeStyle = color;
+      context.lineWidth = 2;
+      context.strokeRect(px, py, w, w);
+      context.shadowBlur = 0;
+      context.fillStyle = color;
+      context.globalAlpha *= 0.35;
+      context.fillRect(px, py, w, w);
+    },
+  },
+  pastel: {
+    colors: [null, '#a8e6ef', '#fff1b8', '#d9b8f0', '#b8e6c1', '#f7b8b8', '#b8d4f7', '#fcd5a8', '#d3dde2'],
+    gridColor: null,
+    draw(context, x, y, color, size) {
+      const px = x * size + 2, py = y * size + 2, w = size - 4;
+      roundedRectPath(context, px, py, w, w, 8);
+      context.fillStyle = color;
+      context.fill();
+      context.fillStyle = 'rgba(255,255,255,0.45)';
+      roundedRectPath(context, px + 4, py + 3, w - 8, 5, 2.5);
+      context.fill();
+    },
+  },
+  pixel: {
+    colors: [null, '#29b6c5', '#f2c200', '#9c4dcc', '#4caf50', '#d32f2f', '#3f7fd0', '#ef8a17', '#8d9ba3'],
+    gridColor: null,
+    draw(context, x, y, color, size) {
+      const px = x * size, py = y * size, u = Math.max(1, Math.floor(size / 6));
+      context.fillStyle = '#000000';
+      context.fillRect(px + 1, py + 1, size - 2, size - 2);
+      context.fillStyle = color;
+      context.fillRect(px + 1 + u / 2, py + 1 + u / 2, size - 2 - u, size - 2 - u);
+      // textura de pixeles: luz arriba/izquierda, sombra abajo/derecha
+      context.fillStyle = 'rgba(255,255,255,0.35)';
+      context.fillRect(px + 1 + u, py + 1 + u, size - 2 - 3 * u, u);
+      context.fillRect(px + 1 + u, py + 1 + u, u, size - 2 - 3 * u);
+      context.fillStyle = 'rgba(0,0,0,0.3)';
+      context.fillRect(px + 1 + 2 * u, py + size - 1 - 2 * u, size - 2 - 3 * u, u);
+      context.fillRect(px + size - 1 - 2 * u, py + 1 + 2 * u, u, size - 2 - 3 * u);
+      context.fillRect(px + 1 + 3 * u, py + 1 + 3 * u, u, u);
+      context.fillRect(px + 1 + 4 * u, py + 1 + 4 * u, u, u);
+    },
+  },
+};
+
+let currentSkin = 'retro';
+
+function activeSkin() {
+  return SKINS[currentSkin];
+}
+
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const skin = activeSkin();
+  context.save();
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = getThemeVar('--block-highlight', 'rgba(255,255,255,0.12)');
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  skin.draw(context, x, y, skin.colors[colorIndex], size);
+  context.restore();
+  context.shadowBlur = 0;
   context.globalAlpha = 1;
 }
 
 function drawNutHole(context, piece, ox, oy, size, alpha) {
   if (piece.type !== NUT) return;
+  const color = activeSkin().colors[NUT];
+  context.save();
   context.globalAlpha = alpha ?? 1;
-  context.strokeStyle = COLORS[NUT];
+  context.strokeStyle = color;
+  if (currentSkin === 'neon') {
+    context.shadowColor = color;
+    context.shadowBlur = 12;
+  }
   context.lineWidth = 3;
   context.beginPath();
   context.arc((ox + 1.5) * size, (oy + 1.5) * size, size * 0.35, 0, Math.PI * 2);
   context.stroke();
+  context.restore();
+  context.shadowBlur = 0;
   context.globalAlpha = 1;
 }
 
 function drawGrid() {
-  ctx.strokeStyle = getThemeVar('--grid-line', '#22222e');
+  ctx.strokeStyle = activeSkin().gridColor || getThemeVar('--grid-line', '#22222e');
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -331,7 +418,7 @@ function themeIcon(theme) {
 
 function setTheme(theme) {
   document.documentElement.classList.toggle('light-theme', theme === 'light');
-  localStorage.setItem('theme', theme);
+  try { localStorage.setItem('theme', theme); } catch (e) { /* ignorar */ }
   themeToggleBtn.textContent = themeIcon(theme);
   if (board) {
     draw();
@@ -347,5 +434,26 @@ themeToggleBtn.addEventListener('click', () => {
   const isLight = document.documentElement.classList.contains('light-theme');
   setTheme(isLight ? 'dark' : 'light');
 });
+
+function setSkin(name) {
+  if (!Object.prototype.hasOwnProperty.call(SKINS, name)) name = 'retro';
+  currentSkin = name;
+  document.documentElement.dataset.skin = name;
+  skinSelect.value = name;
+  try { localStorage.setItem('skin', name); } catch (e) { /* ignorar */ }
+  if (board) {
+    draw();
+    drawNext();
+  }
+}
+
+skinSelect.addEventListener('change', () => {
+  setSkin(skinSelect.value);
+  skinSelect.blur();
+});
+
+let savedSkin = null;
+try { savedSkin = localStorage.getItem('skin'); } catch (e) { /* ignorar */ }
+setSkin(savedSkin);
 
 init();
