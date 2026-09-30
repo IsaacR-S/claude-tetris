@@ -293,7 +293,7 @@ function loop(ts) {
 function init() {
   board = createBoard();
   score = 0;
-  lines = 0;
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   level = startLevel;
   lines = (startLevel - 1) * 10;
   paused = false;
