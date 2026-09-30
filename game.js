@@ -89,7 +89,7 @@ function tryRotate() {
 function merge() {
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
-      if (current.shape[r][c])
+      if (current.shape[r][c] && current.y + r >= 0)
         board[current.y + r][current.x + c] = current.shape[r][c];
 }
 
@@ -253,6 +253,7 @@ function loop(ts) {
     }
   }
   draw();
+  if (gameOver) return;
   animId = requestAnimationFrame(loop);
 }
 
