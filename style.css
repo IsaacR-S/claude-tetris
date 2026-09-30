@@ -16,6 +16,8 @@
   --overlay-bg: rgba(10, 10, 20, 0.75);
   --overlay-title: #e57373;
   --restart-hover: #9bbdff;
+  --menu-btn-bg: #22223a;
+  --menu-btn-border: #3a3a5a;
 }
 
 html.light-theme {
@@ -36,6 +38,8 @@ html.light-theme {
   --overlay-bg: rgba(255, 255, 255, 0.85);
   --overlay-title: #c62828;
   --restart-hover: #5c7cfa;
+  --menu-btn-bg: #e4e4ee;
+  --menu-btn-border: #c0c0d4;
 }
 
 *, *::before, *::after {
@@ -217,4 +221,102 @@ kbd {
 
 #restart-btn:hover {
   background: var(--restart-hover);
+}
+
+/* ---- Menú de pausa ---- */
+.pause-box {
+  gap: 10px;
+}
+
+.pause-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--accent);
+}
+
+.pause-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  min-width: 200px;
+}
+
+.pause-menu.hidden {
+  display: none;
+}
+
+.menu-btn {
+  background: var(--menu-btn-bg);
+  color: var(--text);
+  border: 1px solid var(--menu-btn-border);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.menu-btn:hover,
+.menu-btn:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+#pause-resume {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+#pause-resume:hover,
+#pause-resume:focus-visible {
+  background: var(--restart-hover);
+}
+
+.menu-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.menu-field select {
+  background: var(--menu-btn-bg);
+  color: var(--text);
+  border: 1px solid var(--menu-btn-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.menu-hint {
+  font-size: 11px;
+  color: var(--controls-text);
+}
+
+.pause-keys {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--controls-text);
+  text-align: left;
+}
+
+.pause-keys li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pause-keys li span {
+  display: inline-flex;
+  gap: 4px;
+  min-width: 80px;
 }
