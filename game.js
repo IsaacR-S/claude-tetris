@@ -4,17 +4,85 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#90caf9', // J - pale blue
-  '#ffb74d', // L - orange
-  '#b0bec5', // Nut - metallic gray
-];
+const PALETTES = {
+  retro: [null, '#4dd0e1', '#ffd54f', '#ba68c8', '#81c784', '#e57373', '#90caf9', '#ffb74d', '#b0bec5'],
+  neon:  [null, '#00f0ff', '#fff200', '#d500f9', '#39ff14', '#ff1744', '#2979ff', '#ff9100', '#e0e0e0'],
+  pastel:[null, '#b5ead7', '#fdfd96', '#d7b8f3', '#c7f2a4', '#ffb3ba', '#aec6ff', '#ffdfba', '#d5d5e0'],
+  pixel: [null, '#29b6f6', '#fbc02d', '#8e24aa', '#43a047', '#e53935', '#3949ab', '#fb8c00', '#78909c'],
+};
+
+function roundedRect(context, x, y, w, h, r) {
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.arcTo(x + w, y, x + w, y + h, r);
+  context.arcTo(x + w, y + h, x, y + h, r);
+  context.arcTo(x, y + h, x, y, r);
+  context.arcTo(x, y, x + w, y, r);
+  context.closePath();
+}
+
+const SKINS = {
+  retro: {
+    name: 'Retro',
+    colors: PALETTES.retro,
+    draw(context, px, py, size, color) {
+      context.fillStyle = color;
+      context.fillRect(px + 1, py + 1, size - 2, size - 2);
+      context.fillStyle = getThemeVar('--block-highlight', 'rgba(255,255,255,0.12)');
+      context.fillRect(px + 1, py + 1, size - 2, 4);
+    },
+  },
+  neon: {
+    name: 'Neon',
+    colors: PALETTES.neon,
+    draw(context, px, py, size, color) {
+      context.save();
+      context.shadowColor = color;
+      context.shadowBlur = 12;
+      context.fillStyle = 'rgba(0,0,0,0.85)';
+      context.fillRect(px + 3, py + 3, size - 6, size - 6);
+      context.strokeStyle = color;
+      context.lineWidth = 2;
+      context.strokeRect(px + 3, py + 3, size - 6, size - 6);
+      context.restore();
+    },
+  },
+  pastel: {
+    name: 'Pastel',
+    colors: PALETTES.pastel,
+    draw(context, px, py, size, color) {
+      context.fillStyle = color;
+      roundedRect(context, px + 1.5, py + 1.5, size - 3, size - 3, size * 0.28);
+      context.fill();
+      context.fillStyle = 'rgba(255,255,255,0.4)';
+      roundedRect(context, px + size * 0.2, py + size * 0.15, size * 0.4, size * 0.14, size * 0.07);
+      context.fill();
+    },
+  },
+  pixel: {
+    name: 'Pixel art',
+    colors: PALETTES.pixel,
+    draw(context, px, py, size, color) {
+      context.fillStyle = color;
+      context.fillRect(px + 1, py + 1, size - 2, size - 2);
+      // textura: cuadrícula de "píxeles" alternando claro/oscuro
+      const step = Math.max(2, Math.floor(size / 6));
+      for (let i = 0; i * step < size - 2; i++) {
+        for (let j = 0; j * step < size - 2; j++) {
+          if ((i + j) % 2) continue;
+          context.fillStyle = (i + j) % 4 === 0 ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.2)';
+          context.fillRect(px + 1 + i * step, py + 1 + j * step,
+            Math.min(step, size - 2 - i * step), Math.min(step, size - 2 - j * step));
+        }
+      }
+      context.strokeStyle = 'rgba(0,0,0,0.6)';
+      context.lineWidth = 2;
+      context.strokeRect(px + 1, py + 1, size - 2, size - 2);
+    },
+  },
+};
+
+let currentSkin = SKINS[localStorage.getItem('skin')] || SKINS.retro;
 
 const PIECES = [
   null,
@@ -44,6 +112,7 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -168,20 +237,15 @@ function getThemeVar(name, fallback) {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  // highlight
-  context.fillStyle = getThemeVar('--block-highlight', 'rgba(255,255,255,0.12)');
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  currentSkin.draw(context, x * size, y * size, size, currentSkin.colors[colorIndex]);
   context.globalAlpha = 1;
 }
 
 function drawNutHole(context, piece, ox, oy, size, alpha) {
   if (piece.type !== NUT) return;
   context.globalAlpha = alpha ?? 1;
-  context.strokeStyle = COLORS[NUT];
+  context.strokeStyle = currentSkin.colors[NUT];
   context.lineWidth = 3;
   context.beginPath();
   context.arc((ox + 1.5) * size, (oy + 1.5) * size, size * 0.35, 0, Math.PI * 2);
@@ -324,6 +388,27 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+function setSkin(key) {
+  if (!SKINS[key]) key = 'retro';
+  currentSkin = SKINS[key];
+  localStorage.setItem('skin', key);
+  document.documentElement.dataset.skin = key;
+  skinSelect.value = key;
+  if (board) {
+    draw();
+    drawNext();
+  }
+}
+
+for (const [key, skin] of Object.entries(SKINS)) {
+  skinSelect.add(new Option(skin.name, key));
+}
+skinSelect.addEventListener('change', () => {
+  setSkin(skinSelect.value);
+  skinSelect.blur();
+});
+setSkin(Object.keys(SKINS).find(k => SKINS[k] === currentSkin));
 
 function themeIcon(theme) {
   return theme === 'light' ? '🌙' : '☀️';
