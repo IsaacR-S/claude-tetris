@@ -201,11 +201,15 @@ kbd {
   color: var(--accent);
 }
 
-#restart-btn {
-  margin-top: 8px;
+.overlay-box.hidden {
+  display: none;
+}
+
+.menu-btn {
+  min-width: 180px;
   background: var(--accent);
   color: var(--accent-text);
-  border: none;
+  border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 10px 28px;
   font-size: 14px;
@@ -215,7 +219,7 @@ kbd {
   transition: background 0.15s;
 }
 
-#restart-btn:hover {
+.menu-btn:hover {
   background: var(--restart-hover);
 }
 
@@ -327,4 +331,78 @@ kbd {
 #reset-records-btn:hover {
   border-color: var(--overlay-title);
   color: var(--overlay-title);
+}
+
+.menu-btn.secondary {
+  background: var(--board-bg);
+  color: var(--text);
+  border-color: var(--board-border);
+}
+
+.menu-btn.secondary:hover {
+  background: var(--board-bg);
+  border-color: var(--accent);
+}
+
+#restart-btn {
+  margin-top: 8px;
+}
+
+.pause-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--overlay-title);
+}
+
+.level-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.level-stepper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.step-btn {
+  width: 32px;
+  height: 32px;
+  background: var(--board-bg);
+  color: var(--text);
+  border: 1px solid var(--board-border);
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.step-btn:hover {
+  border-color: var(--accent);
+}
+
+.controls-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+}
+
+.controls-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.controls-list li span {
+  display: inline-flex;
+  gap: 4px;
+  min-width: 80px;
 }
