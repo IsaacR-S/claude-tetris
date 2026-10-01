@@ -10,12 +10,14 @@
       if (localStorage.getItem('theme') === 'light') {
         document.documentElement.classList.add('light-theme');
       }
+      document.documentElement.dataset.skin = localStorage.getItem('skin') || 'retro';
     })();
   </script>
 </head>
 <body>
   <div class="wrapper">
     <button id="theme-toggle" class="theme-toggle" type="button" title="Cambiar modo claro/oscuro" aria-label="Cambiar modo claro/oscuro">☀️</button>
+    <select id="skin-select" class="skin-select" title="Skin" aria-label="Skin"></select>
     <h1 class="game-title">TETRIS</h1>
     <div class="game-container">
       <canvas id="board" width="300" height="600"></canvas>

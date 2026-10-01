@@ -38,6 +38,12 @@ html.light-theme {
   --restart-hover: #5c7cfa;
 }
 
+html[data-skin="neon"] {
+  --board-bg: #000000;
+  --board-border: #1a1a2e;
+  --grid-line: #12121c;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -72,6 +78,19 @@ body {
   line-height: 1;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+}
+
+.skin-select {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  background: var(--board-bg);
+  color: var(--text);
+  border: 1px solid var(--board-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .theme-toggle:hover {
