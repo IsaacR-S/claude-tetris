@@ -44,8 +44,18 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
+const overlayRank = document.getElementById('overlay-rank');
+const nameForm = document.getElementById('name-form');
+const nameInput = document.getElementById('name-input');
+const recordsBox = document.getElementById('records');
+const recordsList = document.getElementById('records-list');
+const recordsStats = document.getElementById('records-stats');
+const resetRecordsBtn = document.getElementById('reset-records-btn');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+const RECORDS_KEY = 'tetris-records';
+const MAX_RECORDS = 5;
+
+let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId, combo, bestCombo;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
@@ -98,6 +108,64 @@ function merge() {
         board[current.y + r][current.x + c] = current.shape[r][c];
 }
 
+function loadRecords() {
+  try {
+    const data = JSON.parse(localStorage.getItem(RECORDS_KEY));
+    if (data && Array.isArray(data.scores)) {
+      return {
+        scores: data.scores.slice(0, MAX_RECORDS),
+        bestCombo: Number(data.bestCombo) || 0,
+        maxLines: Number(data.maxLines) || 0,
+      };
+    }
+  } catch (e) { /* datos corruptos o localStorage no disponible */ }
+  return { scores: [], bestCombo: 0, maxLines: 0 };
+}
+
+function saveRecords(records) {
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); } catch (e) { /* ignorar */ }
+}
+
+function qualifiesForTop(value) {
+  if (value <= 0) return false;
+  const { scores } = loadRecords();
+  return scores.length < MAX_RECORDS || value > scores[scores.length - 1].score;
+}
+
+function renderRecords(highlightIndex = -1) {
+  const records = loadRecords();
+  recordsList.replaceChildren();
+  if (!records.scores.length) {
+    const li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = 'Sin records todavía';
+    recordsList.appendChild(li);
+  }
+  records.scores.forEach((entry, i) => {
+    const li = document.createElement('li');
+    if (i === highlightIndex) li.classList.add('highlight');
+    const name = document.createElement('span');
+    name.className = 'rec-name';
+    name.textContent = entry.name;
+    const pts = document.createElement('span');
+    pts.textContent = Number(entry.score).toLocaleString();
+    li.append(name, pts);
+    recordsList.appendChild(li);
+  });
+  recordsStats.textContent = `Mejor combo: ${records.bestCombo} · Líneas máx.: ${records.maxLines}`;
+}
+
+function addRecord(name, value) {
+  const records = loadRecords();
+  // a igualdad de puntos, el más antiguo queda por delante
+  let idx = records.scores.findIndex(e => value > e.score);
+  if (idx === -1) idx = records.scores.length;
+  records.scores.splice(idx, 0, { name, score: value });
+  records.scores = records.scores.slice(0, MAX_RECORDS);
+  saveRecords(records);
+  return idx;
+}
+
 function clearLines() {
   let cleared = 0;
   for (let r = ROWS - 1; r >= 0; r--) {
@@ -108,6 +176,8 @@ function clearLines() {
       r++;
     }
   }
+  combo = cleared ? combo + 1 : 0;
+  bestCombo = Math.max(bestCombo, combo);
   if (cleared) {
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
@@ -241,12 +311,42 @@ function drawNext() {
   drawNutHole(nextCtx, next, offX, offY, NB);
 }
 
+function showOverlay({ title, scoreText = '', button, showRecords = false, qualifies = false }) {
+  overlayTitle.textContent = title;
+  overlayScore.textContent = scoreText;
+  restartBtn.textContent = button;
+  recordsBox.classList.toggle('hidden', !showRecords);
+  resetRecordsBtn.classList.toggle('hidden', !showRecords);
+  nameForm.classList.toggle('hidden', !qualifies);
+  overlayRank.classList.toggle('hidden', !qualifies);
+  if (qualifies) {
+    overlayRank.textContent = '¡Nuevo récord! Escribe tu nombre';
+    nameInput.value = '';
+  }
+  if (showRecords) renderRecords();
+  overlay.classList.remove('hidden');
+  if (qualifies) nameInput.focus();
+}
+
+function showStart() {
+  gameOver = true;
+  showOverlay({ title: 'TETRIS', button: 'Jugar', showRecords: true });
+}
+
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
-  overlayTitle.textContent = 'GAME OVER';
-  overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
-  overlay.classList.remove('hidden');
+  const records = loadRecords();
+  records.bestCombo = Math.max(records.bestCombo, bestCombo);
+  records.maxLines = Math.max(records.maxLines, lines);
+  saveRecords(records);
+  showOverlay({
+    title: 'GAME OVER',
+    scoreText: `Puntuación: ${score.toLocaleString()}`,
+    button: 'Reiniciar',
+    showRecords: true,
+    qualifies: qualifiesForTop(score),
+  });
 }
 
 function togglePause() {
@@ -257,9 +357,7 @@ function togglePause() {
     loop(lastTime);
   } else {
     cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
+    showOverlay({ title: 'PAUSA', button: 'Continuar' });
   }
 }
 
@@ -285,6 +383,8 @@ function init() {
   score = 0;
   lines = 0;
   level = 1;
+  combo = 0;
+  bestCombo = 0;
   paused = false;
   gameOver = false;
   dropInterval = 1000;
@@ -299,6 +399,7 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
+  if (e.target === nameInput) return;
   if (e.code === 'KeyP') { togglePause(); return; }
   if (paused || gameOver) return;
   switch (e.code) {
@@ -323,7 +424,27 @@ document.addEventListener('keydown', e => {
   updateHUD();
 });
 
-restartBtn.addEventListener('click', init);
+restartBtn.addEventListener('click', () => {
+  if (paused) togglePause();
+  else init();
+});
+
+nameForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const name = nameInput.value.trim() || 'Anónimo';
+  const idx = addRecord(name, score);
+  nameForm.classList.add('hidden');
+  overlayRank.textContent = `¡Entraste en el puesto ${idx + 1}!`;
+  renderRecords(idx);
+});
+
+resetRecordsBtn.addEventListener('click', () => {
+  if (!confirm('¿Borrar todos los records?')) return;
+  saveRecords({ scores: [], bestCombo: 0, maxLines: 0 });
+  overlayRank.classList.add('hidden');
+  nameForm.classList.add('hidden');
+  renderRecords();
+});
 
 function themeIcon(theme) {
   return theme === 'light' ? '🌙' : '☀️';
@@ -348,4 +469,4 @@ themeToggleBtn.addEventListener('click', () => {
   setTheme(isLight ? 'dark' : 'light');
 });
 
-init();
+showStart();
